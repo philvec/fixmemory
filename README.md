@@ -27,13 +27,21 @@ Anything written to memory is retrieved with full confidence. There is no write-
 
 ## The Missing Concept
 
-**Provenance-pinned generation** — every claim in a generated output must map to a specific retrieved memory chunk, or be explicitly flagged as:
-- uncertain (from parametric weights, unverifiable)
-- absent (not in memory, agent should abstain or ask)
+**Provenance-pinned generation** — every claim in a generated output (and ideally already within the mid-layer model reasoning flow) must map to a specific retrieved memory chunk, or be explicitly flagged as uncertain or absent.
+
+The key insight is that memory itself needs richer structure than flat Markdown snippets. Possible directions to research:
+
+- **Fuzzy confidence scores** — each stored fact carries a confidence level (e.g. 0.0–1.0) derived from source reliability, corroboration count, or recency. Retrieval surfaces not just the fact but its certainty, which propagates into generation.
+- **Graph-based memory** — facts are nodes, relationships are edges. This allows reasoning about chains of evidence ("A because B because C"), detecting contradictions between connected nodes, and scoring claims by the strength of their supporting subgraph rather than a single flat chunk.
+- **Decay + reinforcement model** — confidence degrades over time unless re-confirmed, and increases when multiple independent sources agree. A fact no one has corroborated in 6 months is structurally different from one confirmed yesterday.
+- **Epistemic state per claim** — rather than binary retrieved/not-retrieved, each claim in output is tagged with a score inherited from its memory source(s).
+
+*The exact architecture — graph DB, probabilistic logic, fuzzy sets, or a hybrid — is an open research question and a primary focus of this project.*
 
 | Epistemic State | Source | Current Behavior | Required Behavior |
 |---|---|---|---|
-| Grounded claim | Retrieved memory chunk | Blended silently with #2 | Cited, traceable |
+| High-confidence grounded | Retrieved chunk, high score | Blended silently with #2 | Cited with confidence |
+| Low-confidence grounded | Retrieved chunk, low score | Treated as equally valid | Flagged as uncertain |
 | Parametric claim | LLM weights | Treated as equally valid | Flagged as unverified |
 | Unknown | Neither | Falls through to #2 | Explicit abstention |
 
@@ -54,7 +62,6 @@ This requires three additions current systems lack:
 ## What This Project Aims to Build
 
 - A formal spec for provenance-pinned memory interaction (retrieval → generation → verification)
-- A lightweight grounding verifier that runs post-generation
 - An abstention protocol: structured output for "not in memory" vs "uncertain" vs "grounded"
 - Reference integrations for OpenClaw and Claude Code memory formats
 - Evaluation harness: given a memory corpus and a query, measure hallucination rate vs grounding rate
